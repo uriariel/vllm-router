@@ -677,7 +677,6 @@ impl VllmPDRouter {
 
         // Stage 1: dispatch prefill.
         // WRITE mode: defer the prefill send until Stage 2 so we can run both concurrently
-        //   via tokio::join!, guaranteeing the prefill task always executes.
         // READ mode: await and parse — decode params come from the prefill response body.
         //
         // moriio_write_prefill_str holds the serialized prefill body in WRITE mode so it
@@ -757,6 +756,10 @@ impl VllmPDRouter {
                 let prefill_json: Value = serde_json::from_str(&prefill_response_text)
                     .map_err(|e| format!("Failed to parse prefill response as JSON: {}", e))?;
 
+                // Stop profiling on prefill server once we have its response.
+                self.stop_profiling(&format!("http://{}", prefill_base_http))
+                    .await;
+
                 (None, Some(prefill_json))
             }; // end (moriio_write_prefill_str, prefill_response_json)
 
@@ -781,10 +784,6 @@ impl VllmPDRouter {
 
         let decode_request_str = serde_json::to_string(&decode_request)
             .map_err(|e| format!("Failed to serialize decode request: {}", e))?;
-
-        // Stop profiling on prefill server after its work is done
-        self.stop_profiling(&format!("http://{}", prefill_base_http))
-            .await;
 
         // Stage 2: Send to decode server with original request and same P2P coordination header
         debug!(
