@@ -49,7 +49,7 @@ pub struct RouterManager {
     policy_registry: Arc<crate::policies::PolicyRegistry>,
 
     /// All routers managed by this manager
-    /// RouterId examples: "http-regular", "http-pd", "grpc-regular", "grpc-pd"
+    /// RouterId examples: "http-regular", "http-pd"
     routers: Arc<DashMap<RouterId, Arc<dyn RouterTrait>>>,
 
     /// Default router for requests without specific routing
@@ -188,15 +188,6 @@ impl RouterManager {
 
         if let Some(cost) = config.cost {
             labels.insert("cost".to_string(), cost.to_string());
-        }
-
-        // Add gRPC-specific configuration if provided
-        if let Some(tokenizer_path) = config.tokenizer_path {
-            labels.insert("tokenizer_path".to_string(), tokenizer_path);
-        }
-
-        if let Some(chat_template) = config.chat_template {
-            labels.insert("chat_template".to_string(), chat_template);
         }
 
         let worker = match config.worker_type.as_deref() {
@@ -367,8 +358,6 @@ impl RouterManager {
             is_healthy: worker.is_healthy(),
             load: worker.load(),
             connection_mode: format!("{:?}", worker.connection_mode()),
-            tokenizer_path: worker.tokenizer_path().map(|s| s.to_string()),
-            chat_template: worker.chat_template().map(|s| s.to_string()),
             metadata: metadata.labels.clone(),
         }
     }
@@ -470,8 +459,6 @@ impl WorkerManagement for RouterManager {
             cost: None,
             labels: std::collections::HashMap::new(),
             bootstrap_port: None,
-            tokenizer_path: None,
-            chat_template: None,
         };
 
         match self.add_worker(config).await {

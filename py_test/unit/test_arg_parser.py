@@ -251,8 +251,6 @@ class TestRouterArgs:
         assert router_args.health_check_interval_secs == 30
         assert router_args.health_check_endpoint == "/healthz"
 
-        # Note: model_path and tokenizer_path are not available in current RouterArgs
-
     def test_from_cli_args_pd_mode(self):
         """Test creating RouterArgs from CLI arguments in PD mode."""
         args = SimpleNamespace(
@@ -388,8 +386,6 @@ class TestRouterArgs:
             health_check_timeout_secs=5,
             health_check_interval_secs=60,
             health_check_endpoint="/health",
-            model_path=None,
-            tokenizer_path=None,
         )
 
         router_args = RouterArgs.from_cli_args(args, use_router_prefix=False)

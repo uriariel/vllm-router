@@ -225,7 +225,6 @@ async fn server_info_handler(State(config): State<Arc<RwLock<MockWorkerConfig>>>
 
     Json(json!({
         "model_path": "mock-model-path",
-        "tokenizer_path": "mock-tokenizer-path",
         "port": config.port,
         "host": "127.0.0.1",
         "max_num_batched_tokens": 32768,
@@ -239,7 +238,6 @@ async fn server_info_handler(State(config): State<Arc<RwLock<MockWorkerConfig>>>
         "enable_flashinfer": true,
         "enable_p2p_check": true,
         "context_length": 32768,
-        "chat_template": null,
         "disable_radix_cache": false,
         "enable_torch_compile": false,
         "trust_remote_code": false,
@@ -277,7 +275,6 @@ async fn model_info_handler(State(config): State<Arc<RwLock<MockWorkerConfig>>>)
 
     Json(json!({
         "model_path": "mock-model-path",
-        "tokenizer_path": "mock-tokenizer-path",
         "is_generation": true,
         "preferred_sampling_params": {
             "temperature": 0.7,

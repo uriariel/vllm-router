@@ -460,7 +460,6 @@ class TestRouterInitialization:
 
     def test_router_initialization_with_tokenizer_config(self):
         """Test router initialization with tokenizer configuration."""
-        # Note: model_path and tokenizer_path are not available in current RouterArgs
         pytest.skip("Tokenizer configuration not available in current implementation")
 
 

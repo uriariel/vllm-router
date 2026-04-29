@@ -87,9 +87,6 @@ class RouterArgs:
     cb_timeout_duration_secs: int = 60
     cb_window_duration_secs: int = 120
     disable_circuit_breaker: bool = False
-    # Tokenizer configuration
-    model_path: Optional[str] = None
-    tokenizer_path: Optional[str] = None
 
     @staticmethod
     def add_cli_args(
@@ -464,19 +461,6 @@ class RouterArgs:
             nargs="*",
             default=[],
             help="CORS allowed origins (e.g., http://localhost:3000 https://example.com)",
-        )
-        # Tokenizer configuration
-        parser.add_argument(
-            f"--{prefix}model-path",
-            type=str,
-            default=None,
-            help="Model path for loading tokenizer (HuggingFace model ID or local path)",
-        )
-        parser.add_argument(
-            f"--{prefix}tokenizer-path",
-            type=str,
-            default=None,
-            help="Explicit tokenizer path (overrides model_path tokenizer if provided)",
         )
 
     @classmethod

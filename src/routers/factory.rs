@@ -4,7 +4,7 @@ use super::{
     http::{openai_router::OpenAIRouter, router::Router, vllm_pd_router::VllmPDRouter},
     RouterTrait,
 };
-use crate::config::{ConnectionMode, PolicyConfig, RoutingMode};
+use crate::config::{PolicyConfig, RoutingMode};
 use crate::policies::PolicyFactory;
 use crate::server::AppContext;
 use std::sync::Arc;
@@ -15,56 +15,32 @@ pub struct RouterFactory;
 impl RouterFactory {
     /// Create a router instance from application context
     pub async fn create_router(ctx: &Arc<AppContext>) -> Result<Box<dyn RouterTrait>, String> {
-        // Check connection mode and route to appropriate implementation
-        match ctx.router_config.connection_mode {
-            ConnectionMode::Grpc => {
-                // Route to gRPC implementation based on routing mode
-                match &ctx.router_config.mode {
-                    RoutingMode::Regular { worker_urls } => {
-                        Self::create_grpc_router(worker_urls, &ctx.router_config.policy, ctx).await
-                    }
-                    RoutingMode::VllmPrefillDecode {
-                        prefill_urls: _,
-                        decode_urls: _,
-                        prefill_policy: _,
-                        decode_policy: _,
-                        discovery_address: _,
-                    } => Err("vLLM PD mode requires HTTP connection_mode".to_string()),
-                    RoutingMode::OpenAI { .. } => {
-                        Err("OpenAI mode requires HTTP connection_mode".to_string())
-                    }
-                }
+        match &ctx.router_config.mode {
+            RoutingMode::Regular { worker_urls } => {
+                Self::create_regular_router(worker_urls, ctx).await
             }
-            ConnectionMode::Http => {
-                // Route to HTTP implementation based on routing mode
-                match &ctx.router_config.mode {
-                    RoutingMode::Regular { worker_urls } => {
-                        Self::create_regular_router(worker_urls, ctx).await
-                    }
-                    RoutingMode::VllmPrefillDecode {
-                        prefill_urls,
-                        decode_urls,
-                        prefill_policy,
-                        decode_policy,
-                        discovery_address,
-                    } => {
-                        tracing::info!("Creating VllmPDRouter with prefill_urls: {:?}, decode_urls: {:?}, discovery: {:?}",
-                                      prefill_urls, decode_urls, discovery_address);
-                        Self::create_vllm_pd_router(
-                            prefill_urls,
-                            decode_urls,
-                            discovery_address.clone(),
-                            prefill_policy.as_ref(),
-                            decode_policy.as_ref(),
-                            &ctx.router_config.policy,
-                            ctx,
-                        )
-                        .await
-                    }
-                    RoutingMode::OpenAI { worker_urls, .. } => {
-                        Self::create_openai_router(worker_urls.clone(), ctx).await
-                    }
-                }
+            RoutingMode::VllmPrefillDecode {
+                prefill_urls,
+                decode_urls,
+                prefill_policy,
+                decode_policy,
+                discovery_address,
+            } => {
+                tracing::info!("Creating VllmPDRouter with prefill_urls: {:?}, decode_urls: {:?}, discovery: {:?}",
+                              prefill_urls, decode_urls, discovery_address);
+                Self::create_vllm_pd_router(
+                    prefill_urls,
+                    decode_urls,
+                    discovery_address.clone(),
+                    prefill_policy.as_ref(),
+                    decode_policy.as_ref(),
+                    &ctx.router_config.policy,
+                    ctx,
+                )
+                .await
+            }
+            RoutingMode::OpenAI { worker_urls, .. } => {
+                Self::create_openai_router(worker_urls.clone(), ctx).await
             }
         }
     }
@@ -123,23 +99,6 @@ impl RouterFactory {
         )
         .await?;
         tracing::info!("VllmPDRouter instance created successfully");
-
-        Ok(Box::new(router))
-    }
-
-    /// Create a gRPC router with injected policy
-    pub async fn create_grpc_router(
-        worker_urls: &[String],
-        policy_config: &PolicyConfig,
-        ctx: &Arc<AppContext>,
-    ) -> Result<Box<dyn RouterTrait>, String> {
-        use super::grpc::router::GrpcRouter;
-
-        // Create policy
-        let policy = PolicyFactory::create_from_config(policy_config);
-
-        // Create gRPC router with context
-        let router = GrpcRouter::new(worker_urls.to_vec(), policy, ctx).await?;
 
         Ok(Box::new(router))
     }

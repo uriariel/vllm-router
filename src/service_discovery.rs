@@ -599,7 +599,6 @@ mod tests {
             policy_registry: Arc::new(crate::policies::PolicyRegistry::new(
                 router_config.policy.clone(),
             )),
-            tokenizer: None,      // HTTP mode doesn't need tokenizer
             router_manager: None, // Test doesn't need router manager
             response_storage: Arc::new(crate::data_connector::MemoryResponseStorage::new()),
             api_key_cache: Arc::new(tokio::sync::RwLock::new(HashMap::new())),

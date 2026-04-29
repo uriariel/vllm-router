@@ -5,8 +5,6 @@ use std::collections::HashMap;
 
 pub mod core;
 pub mod data_connector;
-#[cfg(feature = "grpc-client")]
-pub mod grpc;
 pub mod metrics;
 pub mod middleware;
 pub mod otel_http;
@@ -93,12 +91,6 @@ struct Router {
     queue_size: usize,
     queue_timeout_secs: u64,
     rate_limit_tokens_per_second: Option<usize>,
-    // Connection mode (determined from worker URLs)
-    connection_mode: config::ConnectionMode,
-    // Model path for tokenizer
-    model_path: Option<String>,
-    // Explicit tokenizer path
-    tokenizer_path: Option<String>,
     // OpenTelemetry tracing
     enable_trace: bool,
     otlp_traces_endpoint: Option<String>,
@@ -107,18 +99,6 @@ struct Router {
 }
 
 impl Router {
-    /// Determine connection mode from worker URLs
-    fn determine_connection_mode(worker_urls: &[String]) -> config::ConnectionMode {
-        // Only consider it gRPC if explicitly specified with grpc:// or grpcs:// scheme
-        for url in worker_urls {
-            if url.starts_with("grpc://") || url.starts_with("grpcs://") {
-                return config::ConnectionMode::Grpc;
-            }
-        }
-        // Default to HTTP for all other cases (including http://, https://, or no scheme)
-        config::ConnectionMode::Http
-    }
-
     /// Convert PyO3 Router to RouterConfig
     pub fn to_router_config(&self) -> config::ConfigResult<config::RouterConfig> {
         use config::{
@@ -199,7 +179,7 @@ impl Router {
             policy,
             host: self.host.clone(),
             port: self.port,
-            connection_mode: self.connection_mode.clone(),
+            connection_mode: config::ConnectionMode::Http,
             max_payload_size: self.max_payload_size,
             request_timeout_secs: self.request_timeout_secs,
             worker_startup_timeout_secs: self.worker_startup_timeout_secs,
@@ -240,8 +220,6 @@ impl Router {
                 endpoint: self.health_check_endpoint.clone(),
             },
             enable_igw: self.enable_igw,
-            model_path: self.model_path.clone(),
-            tokenizer_path: self.tokenizer_path.clone(),
             history_backend: config::HistoryBackend::Memory,
             enable_profiling: false, // Profiling disabled in Python binding by default
             profile_timeout_secs: 10, // Default profiling timeout
@@ -324,9 +302,6 @@ impl Router {
         queue_size = 100,
         queue_timeout_secs = 60,
         rate_limit_tokens_per_second = None,
-        // Tokenizer defaults
-        model_path = None,
-        tokenizer_path = None,
         // Tracing defaults
         enable_trace = false,
         otlp_traces_endpoint = None,
@@ -390,29 +365,10 @@ impl Router {
         queue_size: usize,
         queue_timeout_secs: u64,
         rate_limit_tokens_per_second: Option<usize>,
-        model_path: Option<String>,
-        tokenizer_path: Option<String>,
         enable_trace: bool,
         otlp_traces_endpoint: Option<String>,
         kv_connector: String,
     ) -> PyResult<Self> {
-        // Determine connection mode from worker URLs
-        let mut all_urls = worker_urls.clone();
-
-        // Add prefill URLs if in PD mode
-        if let Some(ref prefill_urls) = prefill_urls {
-            for (url, _) in prefill_urls {
-                all_urls.push(url.clone());
-            }
-        }
-
-        // Add decode URLs if in PD mode
-        if let Some(ref decode_urls) = decode_urls {
-            all_urls.extend(decode_urls.clone());
-        }
-
-        let connection_mode = Self::determine_connection_mode(&all_urls);
-
         Ok(Router {
             host,
             port,
@@ -469,9 +425,6 @@ impl Router {
             queue_size,
             queue_timeout_secs,
             rate_limit_tokens_per_second,
-            connection_mode,
-            model_path,
-            tokenizer_path,
             enable_trace,
             otlp_traces_endpoint,
             kv_connector,

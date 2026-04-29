@@ -254,7 +254,6 @@ class TestRouterConfigValidation:
 
     def test_tokenizer_config_validation(self):
         """Test tokenizer configuration validation."""
-        # Note: model_path and tokenizer_path are not available in current RouterArgs
         pytest.skip("Tokenizer configuration not available in current implementation")
 
     def test_dp_aware_config_validation(self):

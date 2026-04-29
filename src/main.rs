@@ -327,15 +327,6 @@ struct CliArgs {
     #[arg(long, default_value_t = false)]
     enable_igw: bool,
 
-    // Tokenizer configuration
-    /// Model path for loading tokenizer (HuggingFace model ID or local path)
-    #[arg(long)]
-    model_path: Option<String>,
-
-    /// Explicit tokenizer path (overrides model_path tokenizer if provided)
-    #[arg(long)]
-    tokenizer_path: Option<String>,
-
     /// History backend configuration (memory or none)
     #[arg(long, default_value = "memory", value_parser = ["memory", "none"])]
     history_backend: String,
@@ -350,18 +341,6 @@ struct CliArgs {
 }
 
 impl CliArgs {
-    /// Determine connection mode from worker URLs
-    fn determine_connection_mode(worker_urls: &[String]) -> ConnectionMode {
-        // Only consider it gRPC if explicitly specified with grpc:// or grpcs:// scheme
-        for url in worker_urls {
-            if url.starts_with("grpc://") || url.starts_with("grpcs://") {
-                return ConnectionMode::Grpc;
-            }
-        }
-        // Default to HTTP for all other cases (including http://, https://, or no scheme)
-        ConnectionMode::Http
-    }
-
     /// Parse selector strings into HashMap
     fn parse_selector(selector_list: &[String]) -> HashMap<String, String> {
         let mut map = HashMap::new();
@@ -506,30 +485,7 @@ impl CliArgs {
             host: self.prometheus_host.clone(),
         });
 
-        // Determine connection mode from all worker URLs
-        let mut all_urls = Vec::new();
-        match &mode {
-            RoutingMode::Regular { worker_urls } => {
-                all_urls.extend(worker_urls.clone());
-            }
-            RoutingMode::VllmPrefillDecode {
-                prefill_urls,
-                decode_urls,
-                ..
-            } => {
-                for (url, _) in prefill_urls {
-                    all_urls.push(url.clone());
-                }
-                all_urls.extend(decode_urls.clone());
-            }
-            RoutingMode::OpenAI { .. } => {
-                // For connection-mode detection, skip URLs; OpenAI forces HTTP below.
-            }
-        }
-        let connection_mode = match &mode {
-            RoutingMode::OpenAI { .. } => ConnectionMode::Http,
-            _ => Self::determine_connection_mode(&all_urls),
-        };
+        let connection_mode = ConnectionMode::Http;
 
         let api_key_validation_urls = if !self.api_key_validation_urls.is_empty() {
             self.api_key_validation_urls.clone()
@@ -594,8 +550,6 @@ impl CliArgs {
             },
             enable_igw: self.enable_igw,
             rate_limit_tokens_per_second: None,
-            model_path: self.model_path.clone(),
-            tokenizer_path: self.tokenizer_path.clone(),
             history_backend: match self.history_backend.as_str() {
                 "none" => HistoryBackend::None,
                 _ => HistoryBackend::Memory,

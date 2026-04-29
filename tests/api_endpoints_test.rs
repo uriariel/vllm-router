@@ -57,8 +57,6 @@ impl TestContext {
             health_check: vllm_router_rs::config::HealthCheckConfig::default(),
             enable_igw: false,
             connection_mode: ConnectionMode::Http,
-            model_path: None,
-            tokenizer_path: None,
             history_backend: vllm_router_rs::config::HistoryBackend::Memory,
             enable_profiling: false,
             profile_timeout_secs: 30,
@@ -462,7 +460,6 @@ mod model_info_tests {
         // Check for actual vllm server fields
         assert!(body_json.get("version").is_some());
         assert!(body_json.get("model_path").is_some());
-        assert!(body_json.get("tokenizer_path").is_some());
         assert!(body_json.get("port").is_some());
         assert!(body_json.get("max_num_batched_tokens").is_some());
         assert!(body_json.get("schedule_policy").is_some());
@@ -501,10 +498,6 @@ mod model_info_tests {
         assert_eq!(
             body_json.get("model_path").and_then(|v| v.as_str()),
             Some("mock-model-path")
-        );
-        assert_eq!(
-            body_json.get("tokenizer_path").and_then(|v| v.as_str()),
-            Some("mock-tokenizer-path")
         );
         assert_eq!(
             body_json.get("is_generation").and_then(|v| v.as_bool()),
@@ -1396,8 +1389,6 @@ mod error_tests {
             health_check: vllm_router_rs::config::HealthCheckConfig::default(),
             enable_igw: false,
             connection_mode: ConnectionMode::Http,
-            model_path: None,
-            tokenizer_path: None,
             history_backend: vllm_router_rs::config::HistoryBackend::Memory,
             enable_profiling: false,
             profile_timeout_secs: 30,
@@ -1760,8 +1751,6 @@ mod pd_mode_tests {
             health_check: vllm_router_rs::config::HealthCheckConfig::default(),
             enable_igw: false,
             connection_mode: ConnectionMode::Http,
-            model_path: None,
-            tokenizer_path: None,
             history_backend: vllm_router_rs::config::HistoryBackend::Memory,
             enable_profiling: false,
             profile_timeout_secs: 30,
@@ -1927,8 +1916,6 @@ mod request_id_tests {
             health_check: vllm_router_rs::config::HealthCheckConfig::default(),
             enable_igw: false,
             connection_mode: ConnectionMode::Http,
-            model_path: None,
-            tokenizer_path: None,
             history_backend: vllm_router_rs::config::HistoryBackend::Memory,
             enable_profiling: false,
             profile_timeout_secs: 30,

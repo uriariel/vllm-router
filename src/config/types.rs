@@ -68,10 +68,6 @@ pub struct RouterConfig {
     /// Enable Inference Gateway mode (false = proxy mode, true = IGW mode)
     #[serde(default)]
     pub enable_igw: bool,
-    /// Model path for loading tokenizer (can be a HuggingFace model ID or local path)
-    pub model_path: Option<String>,
-    /// Explicit tokenizer path (overrides model_path tokenizer if provided)
-    pub tokenizer_path: Option<String>,
     /// History backend configuration (memory or none, default: memory)
     #[serde(default = "default_history_backend")]
     pub history_backend: HistoryBackend,
@@ -121,6 +117,10 @@ pub enum KvConnector {
     #[serde(rename = "mooncake")]
     #[value(name = "mooncake")]
     Mooncake,
+    /// MoRI-IO KV transfer
+    #[serde(rename = "moriio")]
+    #[value(name = "moriio")]
+    MoriIO,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
@@ -129,8 +129,6 @@ pub enum ConnectionMode {
     #[default]
     #[serde(rename = "http")]
     Http,
-    #[serde(rename = "grpc")]
-    Grpc,
 }
 
 /// Routing mode configuration
@@ -477,8 +475,6 @@ impl Default for RouterConfig {
             health_check: HealthCheckConfig::default(),
             enable_igw: false,
             connection_mode: ConnectionMode::Http,
-            model_path: None,
-            tokenizer_path: None,
             history_backend: default_history_backend(),
             enable_profiling: false,
             profile_timeout_secs: default_profile_timeout_secs(),
@@ -1053,8 +1049,6 @@ mod tests {
             queue_timeout_secs: 60,
             rate_limit_tokens_per_second: None,
             connection_mode: ConnectionMode::Http,
-            model_path: None,
-            tokenizer_path: None,
             history_backend: default_history_backend(),
             enable_profiling: false,
             profile_timeout_secs: default_profile_timeout_secs(),
@@ -1121,8 +1115,6 @@ mod tests {
             queue_timeout_secs: 60,
             rate_limit_tokens_per_second: None,
             connection_mode: ConnectionMode::Http,
-            model_path: None,
-            tokenizer_path: None,
             history_backend: default_history_backend(),
             enable_profiling: false,
             profile_timeout_secs: default_profile_timeout_secs(),
@@ -1185,8 +1177,6 @@ mod tests {
             queue_timeout_secs: 60,
             rate_limit_tokens_per_second: None,
             connection_mode: ConnectionMode::Http,
-            model_path: None,
-            tokenizer_path: None,
             history_backend: default_history_backend(),
             enable_profiling: false,
             profile_timeout_secs: default_profile_timeout_secs(),

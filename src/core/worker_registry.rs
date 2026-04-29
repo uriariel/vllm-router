@@ -270,7 +270,7 @@ impl WorkerRegistry {
     /// This method allows flexible filtering of workers based on:
     /// - model_id: Filter by specific model
     /// - worker_type: Filter by worker type (Regular, Prefill, Decode)
-    /// - connection_mode: Filter by connection mode (Http, Grpc)
+    /// - connection_mode: Filter by connection mode
     /// - healthy_only: Only return healthy workers
     pub fn get_workers_filtered(
         &self,

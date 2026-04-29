@@ -26,9 +26,6 @@ source $HOME/.cargo/env
 rustc --version
 cargo --version
 
-# Install protobuf compiler (on Ubuntu/Debian)
-sudo apt-get update
-sudo apt-get install -y protobuf-compiler libprotobuf-dev
 ```
 
 **Python with pip installed**

@@ -379,7 +379,6 @@ class TestConfigurationValidation:
 
     def test_tokenizer_validation(self):
         """Test tokenizer configuration validation."""
-        # Note: model_path and tokenizer_path are not available in current RouterArgs
         pytest.skip("Tokenizer configuration not available in current implementation")
 
     def test_request_id_headers_validation(self):
