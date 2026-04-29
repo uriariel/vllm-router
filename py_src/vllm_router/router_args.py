@@ -15,7 +15,6 @@ class RouterArgs:
 
     # PD-specific configuration
     mini_lb: bool = False
-    pd_disaggregation: bool = False  # Enable PD disaggregated mode
     vllm_pd_disaggregation: bool = False  # Enable vLLM PD disaggregated mode
     prefill_urls: List[tuple] = dataclasses.field(
         default_factory=list
@@ -177,11 +176,6 @@ class RouterArgs:
             f"--{prefix}mini-lb",
             action="store_true",
             help="Enable MiniLB",
-        )
-        parser.add_argument(
-            f"--{prefix}pd-disaggregation",
-            action="store_true",
-            help="Enable PD (Prefill-Decode) disaggregated mode",
         )
         parser.add_argument(
             f"--{prefix}vllm-pd-disaggregation",
@@ -531,7 +525,7 @@ class RouterArgs:
 
     def _validate_router_args(self):
         # Validate configuration based on mode
-        if self.pd_disaggregation or self.vllm_pd_disaggregation:
+        if self.vllm_pd_disaggregation:
             # Validate PD configuration - skip URL requirements if using service discovery
             if not self.service_discovery:
                 if not self.prefill_urls:
