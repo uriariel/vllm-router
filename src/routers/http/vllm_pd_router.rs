@@ -1026,6 +1026,7 @@ impl VllmPDRouter {
             let write_prefill_response_json: Option<Value> = match prefill_result {
                 Err(prefill_err) => {
                     let duration = start_time.elapsed();
+                    RouterMetrics::record_pd_prefill_error(prefill_http);
                     RouterMetrics::record_pd_request(path);
                     RouterMetrics::record_pd_request_duration(path, duration);
                     RouterMetrics::record_pd_prefill_request(prefill_http);
