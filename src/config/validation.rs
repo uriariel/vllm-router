@@ -455,7 +455,7 @@ impl ConfigValidator {
 
         // MoRI-IO requires service discovery: ZMQ addresses are obtained via instance
         // registration and are not available in direct URL mode.
-        if config.kv_connector == KvConnector::MoriIO && !has_service_discovery {
+        if config.kv_connector == KvConnector::MoriIO && !has_vllm_discovery {
             return Err(ConfigError::IncompatibleConfig {
                 reason: "MoRI-IO KV connector requires service discovery to be enabled \
                          (ZMQ addresses are obtained via instance registration). Please \
@@ -772,17 +772,16 @@ mod tests {
     #[test]
     fn test_moriio_with_service_discovery_is_valid() {
         let mut config = RouterConfig::new(
-            RoutingMode::Regular {
-                worker_urls: vec!["http://worker:8000".to_string()],
+            RoutingMode::VllmPrefillDecode {
+                prefill_urls: vec![],
+                decode_urls: vec![],
+                prefill_policy: None,
+                decode_policy: None,
+                discovery_address: Some("0.0.0.0:36367".to_string()),
             },
             PolicyConfig::Random,
         );
         config.kv_connector = KvConnector::MoriIO;
-        config.discovery = Some(DiscoveryConfig {
-            enabled: true,
-            selector: [("app".to_string(), "vllm".to_string())].into(),
-            ..Default::default()
-        });
 
         let result = ConfigValidator::validate(&config);
         assert!(result.is_ok());
