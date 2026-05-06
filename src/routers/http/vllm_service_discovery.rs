@@ -89,7 +89,7 @@ fn parse_registration(
     message_data: &[u8],
     remote_address: &[u8],
     kv_connector: KvConnector,
-    moriio_transfer_mode: &Arc<OnceLock<MoriIOTransferMode>>,
+    stored_transfer_mode: Option<MoriIOTransferMode>,
 ) -> Option<(ServiceRegistration, Option<MoriIOTransferMode>)> {
     if matches!(kv_connector, KvConnector::MoriIO) {
         let reg: MoriIOServiceRegistration = match rmp_serde::from_slice(message_data) {
@@ -111,7 +111,7 @@ fn parse_registration(
             }
         };
         // Check for mismatch against already-committed mode without committing yet.
-        if let Some(&stored) = moriio_transfer_mode.get() {
+        if let Some(stored) = stored_transfer_mode {
             if stored != mode {
                 warn!(
                     "MoRI-IO transfer_mode mismatch: expected {:?}, got {:?} from {}; skipping",
@@ -241,7 +241,7 @@ impl ServiceRegistry {
             message_data,
             remote_address,
             kv_connector,
-            moriio_transfer_mode,
+            moriio_transfer_mode.get().copied(),
         ) {
             Some(parsed) => parsed,
             None => return,
@@ -487,22 +487,29 @@ mod tests {
 
     #[test]
     fn test_moriio_transfer_mode_mismatch_rejected() {
-        let lock: Arc<OnceLock<MoriIOTransferMode>> = Arc::new(OnceLock::new());
-        lock.set(MoriIOTransferMode::Read).unwrap();
-
-        // Simulate a second registration with WRITE — should detect mismatch.
-        let stored = lock.get().copied().unwrap();
-        let incoming = MoriIOTransferMode::Write;
-        assert_ne!(stored, incoming, "mismatch should be detected");
+        let bytes = make_moriio_msgpack("P", "WRITE");
+        // Stored mode is READ; incoming is WRITE — should be rejected.
+        let result = parse_registration(
+            &bytes,
+            b"peer",
+            KvConnector::MoriIO,
+            Some(MoriIOTransferMode::Read),
+        );
+        assert!(result.is_none());
     }
 
     #[test]
     fn test_moriio_transfer_mode_consistent_registration_accepted() {
-        let lock: Arc<OnceLock<MoriIOTransferMode>> = Arc::new(OnceLock::new());
-        lock.set(MoriIOTransferMode::Write).unwrap();
-
-        let stored = lock.get().copied().unwrap();
-        let incoming = MoriIOTransferMode::Write;
-        assert_eq!(stored, incoming);
+        let bytes = make_moriio_msgpack("P", "WRITE");
+        // Stored mode matches incoming mode — should be accepted.
+        let result = parse_registration(
+            &bytes,
+            b"peer",
+            KvConnector::MoriIO,
+            Some(MoriIOTransferMode::Write),
+        );
+        assert!(result.is_some());
+        let (_, mode) = result.unwrap();
+        assert_eq!(mode, Some(MoriIOTransferMode::Write));
     }
 }
