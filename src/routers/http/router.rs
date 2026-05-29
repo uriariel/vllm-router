@@ -17,9 +17,7 @@ use axum::body::to_bytes;
 use axum::{
     body::Body,
     extract::Request,
-    http::{
-        header::CONTENT_LENGTH, header::CONTENT_TYPE, HeaderMap, HeaderValue, Method, StatusCode,
-    },
+    http::{header::CONTENT_TYPE, HeaderMap, HeaderValue, Method, StatusCode},
     response::{IntoResponse, Response},
     Json,
 };
