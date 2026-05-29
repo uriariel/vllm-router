@@ -687,6 +687,7 @@ impl Router {
                     let name_lc = name.as_str().to_lowercase();
                     if name_lc != "content-type"
                         && name_lc != "content-length"
+                        && header_utils::should_forward_request_header(&name_lc)
                         && !header_utils::TRACE_HEADER_NAMES.contains(&name_lc.as_str())
                     {
                         request_builder = request_builder.header(name, value);
@@ -821,11 +822,11 @@ impl Router {
         // (propagate_trace_headers below injects fresh context).
         if let Some(headers) = headers {
             for (name, value) in headers {
-                if *name != CONTENT_TYPE
-                    && *name != CONTENT_LENGTH
-                    && !header_utils::TRACE_HEADER_NAMES
-                        .iter()
-                        .any(|&th| name.as_str().eq_ignore_ascii_case(th))
+                let name_lc = name.as_str().to_lowercase();
+                if name_lc != "content-type"
+                    && name_lc != "content-length"
+                    && header_utils::should_forward_request_header(&name_lc)
+                    && !header_utils::TRACE_HEADER_NAMES.contains(&name_lc.as_str())
                 {
                     request_builder = request_builder.header(name, value);
                 }

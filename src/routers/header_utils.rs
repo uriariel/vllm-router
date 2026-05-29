@@ -36,6 +36,23 @@ pub fn preserve_response_headers(reqwest_headers: &HeaderMap) -> HeaderMap {
     headers
 }
 
+/// Determine if a request header should be forwarded to backend workers.
+/// Filters hop-by-hop headers and host to avoid upstream protocol errors.
+pub fn should_forward_request_header(name: &str) -> bool {
+    !matches!(
+        name,
+        "connection"
+            | "keep-alive"
+            | "proxy-authenticate"
+            | "proxy-authorization"
+            | "te"
+            | "trailers"
+            | "transfer-encoding"
+            | "upgrade"
+            | "host"
+    )
+}
+
 /// Determine if a header should be forwarded from backend to client
 fn should_forward_header(name: &str) -> bool {
     // List of headers that should NOT be forwarded (hop-by-hop headers)
