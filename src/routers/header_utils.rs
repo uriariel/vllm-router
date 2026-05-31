@@ -36,8 +36,8 @@ pub fn preserve_response_headers(reqwest_headers: &HeaderMap) -> HeaderMap {
     headers
 }
 
-/// Determine if a request header is hop-by-hop and should not be forwarded.
-pub fn is_hop_by_hop_request_header(name: &str) -> bool {
+/// Determine if a request header should be skipped when forwarding upstream.
+pub fn should_skip_request_header(name: &str) -> bool {
     let name = name.to_ascii_lowercase();
     TRACE_HEADER_NAMES.contains(&name.as_str())
         || matches!(
@@ -60,7 +60,7 @@ pub fn is_hop_by_hop_request_header(name: &str) -> bool {
 /// Determine if a request header should be forwarded to backend workers.
 /// Filters hop-by-hop headers, host, and trace propagation headers.
 pub fn should_forward_request_header(name: &str) -> bool {
-    !is_hop_by_hop_request_header(name)
+    !should_skip_request_header(name)
 }
 
 /// Determine if a header should be forwarded from backend to client
@@ -124,10 +124,10 @@ pub fn propagate_headers(
 
 #[cfg(test)]
 mod tests {
-    use super::is_hop_by_hop_request_header;
+    use super::should_skip_request_header;
 
     #[test]
-    fn test_is_hop_by_hop_request_header() {
+    fn test_should_skip_request_header() {
         for name in [
             "host",
             "Host",
@@ -139,11 +139,11 @@ mod tests {
             "proxy-connection",
             "traceparent",
         ] {
-            assert!(is_hop_by_hop_request_header(name));
+            assert!(should_skip_request_header(name));
         }
 
         for name in ["authorization", "x-request-id", "accept"] {
-            assert!(!is_hop_by_hop_request_header(name));
+            assert!(!should_skip_request_header(name));
         }
     }
 }
