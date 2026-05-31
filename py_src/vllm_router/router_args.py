@@ -60,6 +60,12 @@ class RouterArgs:
     request_id_headers: Optional[List[str]] = None
     # Request timeout in seconds
     request_timeout_secs: int = 1800
+    # Force HTTP/1.1 for upstream worker connections
+    upstream_http1_only: bool = False
+    # Disable idle keep-alive connection reuse to upstream workers
+    upstream_disable_keepalive: bool = False
+    # Idle connection pool timeout (seconds) for upstream workers
+    upstream_pool_idle_timeout_secs: Optional[int] = None
     # Max concurrent requests for rate limiting
     max_concurrent_requests: int = 32768
     # Queue size for pending requests when max concurrent limit reached
@@ -352,6 +358,22 @@ class RouterArgs:
             type=int,
             default=RouterArgs.request_timeout_secs,
             help="Request timeout in seconds",
+        )
+        parser.add_argument(
+            f"--{prefix}upstream-http1-only",
+            action="store_true",
+            help="Force HTTP/1.1 for upstream worker connections",
+        )
+        parser.add_argument(
+            f"--{prefix}upstream-disable-keepalive",
+            action="store_true",
+            help="Disable idle keep-alive connection reuse to upstream workers",
+        )
+        parser.add_argument(
+            f"--{prefix}upstream-pool-idle-timeout-secs",
+            type=int,
+            default=RouterArgs.upstream_pool_idle_timeout_secs,
+            help="Idle connection pool timeout (seconds) for upstream workers",
         )
         # Retry configuration
         parser.add_argument(

@@ -36,21 +36,31 @@ pub fn preserve_response_headers(reqwest_headers: &HeaderMap) -> HeaderMap {
     headers
 }
 
+/// Determine if a request header is hop-by-hop and should not be forwarded.
+pub fn is_hop_by_hop_request_header(name: &str) -> bool {
+    let name = name.to_ascii_lowercase();
+    TRACE_HEADER_NAMES.contains(&name.as_str())
+        || matches!(
+            name.as_str(),
+            "connection"
+                | "keep-alive"
+                | "proxy-authenticate"
+                | "proxy-authorization"
+                | "proxy-connection"
+                | "te"
+                | "trailers"
+                | "transfer-encoding"
+                | "upgrade"
+                | "host"
+                | "content-length"
+                | "content-type"
+        )
+}
+
 /// Determine if a request header should be forwarded to backend workers.
-/// Filters hop-by-hop headers and host to avoid upstream protocol errors.
+/// Filters hop-by-hop headers, host, and trace propagation headers.
 pub fn should_forward_request_header(name: &str) -> bool {
-    !matches!(
-        name,
-        "connection"
-            | "keep-alive"
-            | "proxy-authenticate"
-            | "proxy-authorization"
-            | "te"
-            | "trailers"
-            | "transfer-encoding"
-            | "upgrade"
-            | "host"
-    )
+    !is_hop_by_hop_request_header(name)
 }
 
 /// Determine if a header should be forwarded from backend to client
@@ -62,6 +72,7 @@ fn should_forward_header(name: &str) -> bool {
         "keep-alive" |
         "proxy-authenticate" |
         "proxy-authorization" |
+        "proxy-connection" |
         "te" |
         "trailers" |
         "transfer-encoding" |
@@ -109,4 +120,30 @@ pub fn propagate_headers(
         }
     }
     request
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_hop_by_hop_request_header;
+
+    #[test]
+    fn test_is_hop_by_hop_request_header() {
+        for name in [
+            "host",
+            "Host",
+            "content-length",
+            "Content-Type",
+            "connection",
+            "keep-alive",
+            "transfer-encoding",
+            "proxy-connection",
+            "traceparent",
+        ] {
+            assert!(is_hop_by_hop_request_header(name));
+        }
+
+        for name in ["authorization", "x-request-id", "accept"] {
+            assert!(!is_hop_by_hop_request_header(name));
+        }
+    }
 }

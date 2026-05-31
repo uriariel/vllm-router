@@ -184,6 +184,31 @@ vllm-router \
 
 **Retry Policy:** Retries on HTTP status codes 408/429/500/502/503/504, with backoff/jitter between attempts.
 
+### Upstream Connection Tuning
+
+Control upstream HTTP behavior when routing through service meshes or strict proxies:
+
+```bash
+vllm-router \
+  --worker-urls http://localhost:8080 \
+  --upstream-disable-keepalive \
+  --upstream-http1-only \
+  --upstream-pool-idle-timeout-secs 10
+```
+
+- `--upstream-http1-only`: Force HTTP/1.1 for upstream workers.
+- `--upstream-disable-keepalive`: Disable idle keep-alive reuse to upstream workers.
+- `--upstream-pool-idle-timeout-secs`: Override idle pool timeout in seconds.
+
+### Queue Configuration
+
+```bash
+vllm-router \
+  --worker-urls http://localhost:8080 \
+  --queue-size 100 \
+  --queue-timeout-secs 60
+```
+
 ### Request ID Tracking
 
 Track requests across distributed systems with configurable headers:

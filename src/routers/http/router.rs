@@ -430,11 +430,7 @@ impl Router {
                 let route_name = format!("/{}", endpoint);
                 let mut request_builder = self.client.get(&url);
                 for (name, value) in headers {
-                    let name_lc = name.to_lowercase();
-                    if name_lc != "content-type"
-                        && name_lc != "content-length"
-                        && !header_utils::TRACE_HEADER_NAMES.contains(&name_lc.as_str())
-                    {
+                    if header_utils::should_forward_request_header(name.as_str()) {
                         request_builder = request_builder.header(name, value);
                     }
                 }
@@ -682,12 +678,7 @@ impl Router {
 
             if let Some(hdrs) = headers {
                 for (name, value) in hdrs {
-                    let name_lc = name.as_str().to_lowercase();
-                    if name_lc != "content-type"
-                        && name_lc != "content-length"
-                        && header_utils::should_forward_request_header(&name_lc)
-                        && !header_utils::TRACE_HEADER_NAMES.contains(&name_lc.as_str())
-                    {
+                    if header_utils::should_forward_request_header(name.as_str()) {
                         request_builder = request_builder.header(name, value);
                     }
                 }
@@ -820,12 +811,7 @@ impl Router {
         // (propagate_trace_headers below injects fresh context).
         if let Some(headers) = headers {
             for (name, value) in headers {
-                let name_lc = name.as_str().to_lowercase();
-                if name_lc != "content-type"
-                    && name_lc != "content-length"
-                    && header_utils::should_forward_request_header(&name_lc)
-                    && !header_utils::TRACE_HEADER_NAMES.contains(&name_lc.as_str())
-                {
+                if header_utils::should_forward_request_header(name.as_str()) {
                     request_builder = request_builder.header(name, value);
                 }
             }
@@ -863,10 +849,7 @@ impl Router {
                     }
                 }
 
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Request failed: {}", e),
-                )
+                return (StatusCode::BAD_GATEWAY, format!("Request failed: {}", e))
                     .into_response();
             }
         };

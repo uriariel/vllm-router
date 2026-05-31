@@ -21,6 +21,15 @@ pub struct RouterConfig {
     pub max_payload_size: usize,
     /// Request timeout in seconds
     pub request_timeout_secs: u64,
+    /// Force HTTP/1.1 to upstream workers
+    #[serde(default)]
+    pub upstream_http1_only: bool,
+    /// Disable idle connection reuse to upstream workers
+    #[serde(default)]
+    pub upstream_disable_keepalive: bool,
+    /// Idle connection pool timeout for upstream workers (seconds)
+    #[serde(default)]
+    pub upstream_pool_idle_timeout_secs: Option<u64>,
     /// Worker startup timeout in seconds
     pub worker_startup_timeout_secs: u64,
     /// Worker health check interval in seconds
@@ -453,6 +462,9 @@ impl Default for RouterConfig {
             port: 3001,
             max_payload_size: 536_870_912, // 512MB
             request_timeout_secs: 1800,    // 30 minutes
+            upstream_http1_only: false,
+            upstream_disable_keepalive: false,
+            upstream_pool_idle_timeout_secs: None,
             worker_startup_timeout_secs: 600,
             worker_startup_check_interval_secs: 30,
             intra_node_data_parallel_size: 1,
@@ -1020,6 +1032,9 @@ mod tests {
             port: 3000,
             max_payload_size: 1048576,
             request_timeout_secs: 120,
+            upstream_http1_only: false,
+            upstream_disable_keepalive: false,
+            upstream_pool_idle_timeout_secs: None,
             worker_startup_timeout_secs: 60,
             worker_startup_check_interval_secs: 5,
             intra_node_data_parallel_size: 1,
@@ -1086,6 +1101,9 @@ mod tests {
             port: 3001,
             max_payload_size: 536870912,
             request_timeout_secs: 300,
+            upstream_http1_only: false,
+            upstream_disable_keepalive: false,
+            upstream_pool_idle_timeout_secs: None,
             worker_startup_timeout_secs: 180,
             worker_startup_check_interval_secs: 15,
             intra_node_data_parallel_size: 1,
@@ -1143,6 +1161,9 @@ mod tests {
             port: 8888,
             max_payload_size: 1024 * 1024 * 512, // 512MB
             request_timeout_secs: 900,
+            upstream_http1_only: false,
+            upstream_disable_keepalive: false,
+            upstream_pool_idle_timeout_secs: None,
             worker_startup_timeout_secs: 600,
             worker_startup_check_interval_secs: 20,
             intra_node_data_parallel_size: 1,

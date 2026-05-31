@@ -247,9 +247,29 @@ struct CliArgs {
     #[arg(long, default_value_t = 1800)]
     request_timeout_secs: u64,
 
+    /// Force HTTP/1.1 for upstream worker connections
+    #[arg(long, default_value_t = false)]
+    upstream_http1_only: bool,
+
+    /// Disable idle keep-alive connection reuse to upstream workers
+    #[arg(long, default_value_t = false)]
+    upstream_disable_keepalive: bool,
+
+    /// Idle connection pool timeout (seconds) for upstream workers
+    #[arg(long)]
+    upstream_pool_idle_timeout_secs: Option<u64>,
+
     /// Maximum number of concurrent requests allowed
     #[arg(long, default_value_t = 32768)]
     max_concurrent_requests: usize,
+
+    /// Queue size for pending requests when max concurrent limit reached (0 = no queue)
+    #[arg(long, default_value_t = 100)]
+    queue_size: usize,
+
+    /// Maximum time (in seconds) a request can wait in queue before timing out
+    #[arg(long, default_value_t = 60)]
+    queue_timeout_secs: u64,
 
     /// CORS allowed origins
     #[arg(long, num_args = 0..)]
@@ -508,6 +528,9 @@ impl CliArgs {
             port: self.port,
             max_payload_size: self.max_payload_size,
             request_timeout_secs: self.request_timeout_secs,
+            upstream_http1_only: self.upstream_http1_only,
+            upstream_disable_keepalive: self.upstream_disable_keepalive,
+            upstream_pool_idle_timeout_secs: self.upstream_pool_idle_timeout_secs,
             worker_startup_timeout_secs: self.worker_startup_timeout_secs,
             worker_startup_check_interval_secs: self.worker_startup_check_interval,
             intra_node_data_parallel_size: self.intra_node_data_parallel_size,
@@ -523,8 +546,8 @@ impl CliArgs {
                 Some(self.request_id_headers.clone())
             },
             max_concurrent_requests: self.max_concurrent_requests,
-            queue_size: 100,        // Default queue size
-            queue_timeout_secs: 60, // Default timeout
+            queue_size: self.queue_size,
+            queue_timeout_secs: self.queue_timeout_secs,
             cors_allowed_origins: self.cors_allowed_origins.clone(),
             retry: RetryConfig {
                 max_retries: self.retry_max_retries,

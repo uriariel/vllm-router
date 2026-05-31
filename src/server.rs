@@ -839,13 +839,30 @@ pub async fn startup(config: ServerConfig) -> Result<(), Box<dyn std::error::Err
     );
 
     println!("DEBUG: Creating HTTP client");
-    let client = Client::builder()
-        .pool_idle_timeout(Some(Duration::from_secs(50)))
-        .pool_max_idle_per_host(500)
-        .timeout(Duration::from_secs(config.request_timeout_secs))
+    let router_config = &config.router_config;
+    let mut client_builder = Client::builder()
+        .timeout(Duration::from_secs(router_config.request_timeout_secs))
         .connect_timeout(Duration::from_secs(10))
         .tcp_nodelay(true)
-        .tcp_keepalive(Some(Duration::from_secs(30)))
+        .tcp_keepalive(Some(Duration::from_secs(30)));
+
+    if router_config.upstream_disable_keepalive {
+        client_builder = client_builder.pool_max_idle_per_host(0);
+    } else {
+        let idle_timeout =
+            router_config
+                .upstream_pool_idle_timeout_secs
+                .unwrap_or(50);
+        client_builder = client_builder
+            .pool_idle_timeout(Some(Duration::from_secs(idle_timeout)))
+            .pool_max_idle_per_host(500);
+    }
+
+    if router_config.upstream_http1_only {
+        client_builder = client_builder.http1_only();
+    }
+
+    let client = client_builder
         .build()
         .expect("Failed to create HTTP client");
     println!("DEBUG: HTTP client created");
