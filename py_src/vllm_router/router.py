@@ -84,7 +84,7 @@ class Router:
         upstream_http1_only: Force HTTP/1.1 for upstream worker connections. Default: False
         upstream_disable_keepalive: Disable idle keep-alive connection reuse to upstream workers. Default: False
         upstream_pool_idle_timeout_secs: Idle connection pool timeout (seconds) for upstream workers. Default: None
-        max_concurrent_requests: Maximum number of concurrent requests allowed for rate limiting. Default: 256
+        max_concurrent_requests: Maximum number of concurrent requests allowed for rate limiting. Default: 32768
         queue_size: Queue size for pending requests when max concurrent limit reached (0 = no queue, return 429 immediately). Default: 100
         queue_timeout_secs: Maximum time (in seconds) a request can wait in queue before timing out. Default: 60
         rate_limit_tokens_per_second: Token bucket refill rate (tokens per second). If not set, defaults to max_concurrent_requests. Default: None
