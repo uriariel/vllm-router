@@ -9,7 +9,7 @@ use crate::{
     protocols::{
         spec::{
             ChatCompletionRequest, CompletionRequest, EmbeddingRequest, GenerateRequest,
-            RerankRequest, V1RerankReqInput,
+            InferenceGenerateRequest, RerankRequest, V1RerankReqInput,
         },
         worker_spec::{WorkerApiResponse, WorkerConfigRequest, WorkerErrorResponse},
     },
@@ -224,6 +224,21 @@ async fn generate(
     state
         .router
         .route_generate(Some(&headers), &body, None)
+        .await
+}
+
+async fn inference_generate(
+    State(state): State<Arc<AppState>>,
+    headers: http::HeaderMap,
+    Json(body): Json<InferenceGenerateRequest>,
+) -> Response {
+    if let Err(response) = authorize_request(&state, &headers).await {
+        return response;
+    }
+
+    state
+        .router
+        .route_inference_generate(Some(&headers), &body, None)
         .await
 }
 
@@ -705,6 +720,7 @@ pub fn build_app_with_request_tracing(
     // Create routes
     let protected_routes = Router::new()
         .route("/generate", post(generate))
+        .route("/inference/v1/generate", post(inference_generate))
         .route("/v1/chat/completions", post(v1_chat_completions))
         .route("/v1/completions", post(v1_completions))
         .route("/rerank", post(rerank))

@@ -4,7 +4,8 @@ use crate::config::CircuitBreakerConfig;
 use crate::core::{CircuitBreaker, CircuitBreakerConfig as CoreCircuitBreakerConfig};
 use crate::otel_http::{self, ClientRequestOptions};
 use crate::protocols::spec::{
-    ChatCompletionRequest, CompletionRequest, GenerateRequest, RerankRequest,
+    ChatCompletionRequest, CompletionRequest, GenerateRequest, InferenceGenerateRequest,
+    RerankRequest,
 };
 use async_trait::async_trait;
 use axum::{
@@ -202,6 +203,19 @@ impl super::super::RouterTrait for OpenAIRouter {
         _model_id: Option<&str>,
     ) -> Response {
         // Generate endpoint is VLLM-specific, not supported for OpenAI backend
+        (
+            StatusCode::NOT_IMPLEMENTED,
+            "Generate endpoint not supported for OpenAI backend",
+        )
+            .into_response()
+    }
+
+    async fn route_inference_generate(
+        &self,
+        _headers: Option<&HeaderMap>,
+        _body: &InferenceGenerateRequest,
+        _model_id: Option<&str>,
+    ) -> Response {
         (
             StatusCode::NOT_IMPLEMENTED,
             "Generate endpoint not supported for OpenAI backend",
